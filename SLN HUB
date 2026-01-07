@@ -1,0 +1,154 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "SLN Hub",
+    Icon = "door-open", -- lucide icon. optional
+    Author = "by SELENA_GAMING", -- optional
+})
+
+Window:EditOpenButton({
+    Title = "SLN Hub",
+    Icon = "monitor",
+    CornerRadius = UDim.new(0,16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new( -- gradient
+        Color3.fromHex("FF0F7B"), 
+        Color3.fromHex("F89B29")
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
+})
+
+local Tab = Window:Tab({
+    Title = "Blox Fruit Scripts",
+    Icon = "box", -- optional
+    Locked = false,
+})
+
+local Button = Tab:Button({
+    Title = "Summon Gravity Hub",
+    Color = Color3.fromHex("#a2ff30"), -- custom green
+    Justify = "Center",
+    IconAlign = "Left",
+    Icon = "box", -- no icon
+    Callback = function()
+        local success, err = pcall(function()
+            -- Dex Explorer V4 (latest / stable)
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-GravityHub/BloxFruit/refs/heads/main/Main.lua"))()
+        end)
+
+        if not success then
+            warn("[Gravity Hub] Load failed:", err)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Summon Quantum Hub",
+    Color = Color3.fromHex("#a2ff30"), -- custom green
+    Justify = "Center",
+    IconAlign = "Left",
+    Icon = "box", -- no icon
+    Callback = function()
+        local success, err = pcall(function()
+            -- Dex Explorer V4 (latest / stable)
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/flazhy/QuantumOnyx/refs/heads/main/QuantumOnyx.lua"))()
+        end)
+
+        if not success then
+            warn("[Quamtum Hub] Load failed:", err)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Summon Leaf Hub",
+    Color = Color3.fromHex("#a2ff30"), -- custom green
+    Justify = "Center",
+    IconAlign = "Left",
+    Icon = "box", -- no icon
+    Callback = function()
+        local success, err = pcall(function()
+            -- Dex Explorer V4 (latest / stable)
+            repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
+loadstring(game:HttpGet("https://leaf-zeta.onrender.com/api/script"))()
+        end)
+
+        if not success then
+            warn("[Leaf Hub] Load failed:", err)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Summon Redz Hub",
+    Color = Color3.fromHex("#a2ff30"), -- custom green
+    Justify = "Center",
+    IconAlign = "Left",
+    Icon = "box", -- no icon
+    Callback = function()
+        local success, err = pcall(function()
+            -- Dex Explorer V4 (latest / stable)
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))()
+        end)
+
+        if not success then
+            warn("[Redz Hub] Load failed:", err)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Summon Blue X Hub",
+    Color = Color3.fromHex("#a2ff30"), -- custom green
+    Justify = "Center",
+    IconAlign = "Left",
+    Icon = "box", -- no icon
+    Callback = function()
+        local success, err = pcall(function()
+            -- Dex Explorer V4 (latest / stable)
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-BlueX/BlueX-Hub/refs/heads/main/Main.lua"))()
+        end)
+
+        if not success then
+            warn("[Blue X Hub] Load failed:", err)
+        end
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "The Forge Scripts",
+    Icon = "box", -- optional
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Coming Soon",
+})
+
+WindUI:Notify({
+    Title = "SLN Hub",
+    Content = "Hope You Play With Your Fun And Happy",
+    Duration = 3, -- 3 seconds
+    Icon = "bird",
+})
+
+WindUI:Popup({
+    Title = "Welcome",
+    Icon = "info",
+    Content = "Fun and Happy",
+    Buttons = {
+        {
+            Title = "Cancel",
+            Callback = function() end,
+            Variant = "Tertiary",
+        },
+        {
+            Title = "Continue",
+            Icon = "arrow-right",
+            Callback = function() end,
+            Variant = "Primary",
+        }
+    }
+})
