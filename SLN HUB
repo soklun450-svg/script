@@ -189,78 +189,25 @@ local function tableToClipboard(luau_table, indent)
     return jsonString
 end
 
-local AboutTab = Window:Tab({
-        Title = "About WindUI",
-        Desc = "Description Example", 
-        Icon = "solar:info-square-bold",
-        IconColor = Grey,
-        IconShape = "Square",
-        Border = true,
-    })
-    
-    local AboutSection = AboutTab:Section({
-        Title = "About WindUI",
-    })
-    
-    AboutSection:Image({
-        Image = "https://repository-images.githubusercontent.com/880118829/22c020eb-d1b1-4b34-ac4d-e33fd88db38d",
-        AspectRatio = "16:9",
-        Radius = 9,
-    })
-    
-    AboutSection:Space({ Columns = 3 })
-    
-    AboutSection:Section({
-        Title = "What is WindUI?",
-        TextSize = 24,
-        FontWeight = Enum.FontWeight.SemiBold,
-    })
+local Tab = Window:Tab({
+    Title = "Destroy Window",
+    Icon = "solar:home-2-bold", -- optional
+    IconColor = Green,
+    IconShape = "Square",
+    Border = true,
+    Locked = false,
+})
 
-    AboutSection:Space()
-    
-    AboutSection:Section({
-        Title = [[WindUI is a stylish, open-source UI (User Interface) library specifically designed for Roblox Script Hubs.
-Developed by Footagesus (.ftgs, Footages).
-It aims to provide developers with a modern, customizable, and easy-to-use toolkit for creating visually appealing interfaces within Roblox.
-The project is primarily written in Lua (Luau), the scripting language used in Roblox.]],
-        TextSize = 18,
-        TextTransparency = .35,
-        FontWeight = Enum.FontWeight.Medium,
-    })
-    
-    AboutTab:Space({ Columns = 4 }) 
-    
-    
-    -- Default buttons
-    
-    AboutTab:Button({
-        Title = "Export WindUI JSON (copy)",
-        Color = Color3.fromHex("#a2ff30"),
-        Justify = "Center",
-        IconAlign = "Left",
-        Icon = "", -- removing icon
-        Callback = function()
-            tableToClipboard(WindUI)
-            WindUI:Notify({
-                Title = "WindUI JSON",
-                Content = "Copied to Clipboard!"
-            })
-        end
-    })
-    AboutTab:Space({ Columns = 1 }) 
-    
-    
-    AboutTab:Button({
-        Title = "Destroy Window",
-        Color = Color3.fromHex("#ff4830"),
-        Justify = "Center",
-        Icon = "shredder",
-        IconAlign = "Left",
-        Callback = function()
-            Window:Destroy()
-        end
-    })
-end
+local Button = Tab:Button({
+    Title = "Destroy Hub",
+    Color = Color3.fromHex("#a2ff30"), -- paint the button
+    Justify = "Center", -- align items in the center (Center or Between or Left or Right)
+    IconAlign = "Left", -- Left or Right of the text
+    Icon = "", -- removing icon
+    Callback = function()
+        Window:Destroy()
+    end
+})
 
 local Tab = Window:Tab({
     Title = "Blox Fruit Scripts",
