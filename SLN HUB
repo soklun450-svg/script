@@ -13,7 +13,7 @@ local Window = WindUI:CreateWindow({
 -- */  Tags  /* --
 do
     Window:Tag({
-        Title = "v1.0" .. WindUI.Version,
+        Title = "v1.1" .. WindUI.Version,
         Icon = "github",
         Color = Color3.fromHex("#1c1c1c"),
         Border = true,
@@ -220,9 +220,9 @@ local Tab = Window:Tab({
 
 WindUI:Notify({
     Title = "SLN Hub",
-    Content = "Hope You Play With Your Fun And Happy",
-    Duration = 3, -- 3 seconds
-    Icon = "bird",
+    Content = "",
+    Duration = 1, -- 3 seconds
+    Icon = "house",
 })
 
 WindUI:Popup({
