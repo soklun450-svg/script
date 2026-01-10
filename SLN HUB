@@ -210,7 +210,7 @@ local Button = Tab:Button({
 })
 
 local Tab = Window:Tab({
-    Title = "Blox Fruit Scripts",
+    Title = "Main farm & other farm",
     Icon = "solar:home-2-bold", -- optional
     IconColor = Green,
     IconShape = "Square",
