@@ -211,18 +211,52 @@ local Button = Tab:Button({
 
 --// Services
 local Players = game:GetService("Players")
-local VirtualUser = game:GetService("VirtualUser")
 local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
 
 local Player = Players.LocalPlayer
 local AutoAttack = false
 local AttackConnection
 
---// SETTINGS (tweakable)
-local ATTACK_DELAY = 0.08 -- speed (lower = faster)
-local HOLD_DISTANCE = 18  -- safe hit distance
+--// SETTINGS
+local ATTACK_INTERVAL = 1       -- attack every 1 second
+local ATTACK_RANGE = 15         -- distance to auto attack NPCs/Players
 
---// Core Attack Function
+--// Get nearest target (NPC or Player)
+local function getNearestTarget()
+    local Character = Player.Character
+    if not Character or not Character:FindFirstChild("HumanoidRootPart") then return nil end
+    local HRP = Character.HumanoidRootPart
+
+    local nearest = nil
+    local shortestDist = ATTACK_RANGE
+
+    -- Check NPCs
+    for _, npc in pairs(workspace.Enemies:GetChildren()) do
+        if npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 and npc:FindFirstChild("HumanoidRootPart") then
+            local dist = (npc.HumanoidRootPart.Position - HRP.Position).Magnitude
+            if dist <= shortestDist then
+                nearest = npc
+                shortestDist = dist
+            end
+        end
+    end
+
+    -- Check other players (optional)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+            local dist = (p.Character.HumanoidRootPart.Position - HRP.Position).Magnitude
+            if dist <= shortestDist then
+                nearest = p.Character
+                shortestDist = dist
+            end
+        end
+    end
+
+    return nearest
+end
+
+--// Auto Attack Function
 local function StartAutoAttack()
     if AttackConnection then return end
 
@@ -231,32 +265,27 @@ local function StartAutoAttack()
 
         local Character = Player.Character
         if not Character then return end
-
-        local Tool = Character:FindFirstChildOfClass("Tool")
         local HRP = Character:FindFirstChild("HumanoidRootPart")
+        local Tool = Character:FindFirstChildOfClass("Tool")
+        if not HRP or not Tool then return end
 
-        if Tool and HRP then
-            -- Auto tap (mobile / PC compatible)
-            VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-            task.wait(ATTACK_DELAY)
-            VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        local target = getNearestTarget()
+        if target and target:FindFirstChild("HumanoidRootPart") then
+            -- Face the target
+            HRP.CFrame = CFrame.new(HRP.Position, target.HumanoidRootPart.Position)
 
-            -- Force tool activate (M1)
+            -- Activate tool (M1)
             pcall(function()
                 Tool:Activate()
             end)
 
-            -- Light range assist (not insane)
-            for _,v in pairs(workspace.Enemies:GetChildren()) do
-                local eh = v:FindFirstChild("Humanoid")
-                local ehrp = v:FindFirstChild("HumanoidRootPart")
-                if eh and ehrp and eh.Health > 0 then
-                    if (ehrp.Position - HRP.Position).Magnitude <= HOLD_DISTANCE then
-                        HRP.CFrame = CFrame.new(HRP.Position, ehrp.Position)
-                        break
-                    end
-                end
-            end
+            -- Auto tap (mobile safe)
+            VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            task.wait(0.05)
+            VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+
+            -- Wait 1 second before next attack
+            task.wait(ATTACK_INTERVAL)
         end
     end)
 end
@@ -271,7 +300,7 @@ end
 --// WindUI Toggle
 local Toggle = Tab:Toggle({
     Title = "Auto M1 Attack",
-    Desc = "Auto tap + auto M1 (Melee / Sword / Fruit)",
+    Desc = "Auto attack nearby NPCs/Players every 1 second",
     Icon = "swords",
     Type = "Checkbox",
     Value = false,
@@ -284,6 +313,10 @@ local Toggle = Tab:Toggle({
         end
     end
 })
+
+ToggleTab:Toggle({
+        Title = "Toggle",
+    })
 
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
