@@ -190,9 +190,9 @@ local function tableToClipboard(luau_table, indent)
 end
 
 local Tab = Window:Tab({
-    Title = "Destroy Window",
-    Icon = "solar:home-2-bold", -- optional
-    IconColor = Green,
+    Title = "Destroy hub",
+    Icon = "settings", -- optional
+    IconColor = Grey,
     IconShape = "Square",
     Border = true,
     Locked = false,
@@ -216,110 +216,6 @@ local Tab = Window:Tab({
     IconShape = "Square",
     Border = true,
     Locked = false,
-})
-
-local Button = Tab:Button({
-    Title = "Summon Gravity Hub",
-    Color = Color3.fromHex("#a2ff30"), -- custom green
-    Justify = "Center",
-    IconAlign = "Left",
-    Icon = "box", -- no icon
-    Callback = function()
-        local success, err = pcall(function()
-            -- Dex Explorer V4 (latest / stable)
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-GravityHub/BloxFruit/refs/heads/main/Main.lua"))()
-        end)
-
-        if not success then
-            warn("[Gravity Hub] Load failed:", err)
-        end
-    end
-})
-
-local Button = Tab:Button({
-    Title = "Summon Quantum Hub",
-    Color = Color3.fromHex("#a2ff30"), -- custom green
-    Justify = "Center",
-    IconAlign = "Left",
-    Icon = "box", -- no icon
-    Callback = function()
-        local success, err = pcall(function()
-            -- Dex Explorer V4 (latest / stable)
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/flazhy/QuantumOnyx/refs/heads/main/QuantumOnyx.lua"))()
-        end)
-
-        if not success then
-            warn("[Quamtum Hub] Load failed:", err)
-        end
-    end
-})
-
-local Button = Tab:Button({
-    Title = "Summon Leaf Hub",
-    Color = Color3.fromHex("#a2ff30"), -- custom green
-    Justify = "Center",
-    IconAlign = "Left",
-    Icon = "box", -- no icon
-    Callback = function()
-        local success, err = pcall(function()
-            -- Dex Explorer V4 (latest / stable)
-            repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
-loadstring(game:HttpGet("https://leaf-zeta.onrender.com/api/script"))()
-        end)
-
-        if not success then
-            warn("[Leaf Hub] Load failed:", err)
-        end
-    end
-})
-
-local Button = Tab:Button({
-    Title = "Summon Redz Hub",
-    Color = Color3.fromHex("#a2ff30"), -- custom green
-    Justify = "Center",
-    IconAlign = "Left",
-    Icon = "box", -- no icon
-    Callback = function()
-        local success, err = pcall(function()
-            -- Dex Explorer V4 (latest / stable)
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))()
-        end)
-
-        if not success then
-            warn("[Redz Hub] Load failed:", err)
-        end
-    end
-})
-
-local Button = Tab:Button({
-    Title = "Summon Blue X Hub",
-    Color = Color3.fromHex("#a2ff30"), -- custom green
-    Justify = "Center",
-    IconAlign = "Left",
-    Icon = "box", -- no icon
-    Callback = function()
-        local success, err = pcall(function()
-            -- Dex Explorer V4 (latest / stable)
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-BlueX/BlueX-Hub/refs/heads/main/Main.lua"))()
-        end)
-
-        if not success then
-            warn("[Blue X Hub] Load failed:", err)
-        end
-    end
-})
-
-local Tab = Window:Tab({
-    Title = "The Forge Scripts",
-    Icon = "solar:check-square-bold", -- optional
-    IconColor = Green,
-    IconShape = "Square",
-    Border = true,
-    Locked = false,
-})
-
-local Section = Tab:Section({ 
-    Title = "Coming Soon",
 })
 
 WindUI:Notify({
