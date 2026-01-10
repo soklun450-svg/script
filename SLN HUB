@@ -209,6 +209,44 @@ local Button = Tab:Button({
     end
 })
 
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
+
+local AutoM1 = false
+
+local Toggle = Tab:Toggle({
+    Title = "Auto M1 Attack",
+    Desc = "Automatically taps screen when holding a melee sword",
+    Icon = "bird",
+    Type = "Checkbox",
+    Value = false, -- default
+    Callback = function(state)
+        AutoM1 = state
+        print("Auto M1 Activated: " .. tostring(state))
+    end
+})
+
+-- RunService loop to auto-click
+RunService.RenderStepped:Connect(function()
+    if AutoM1 then
+        local Character = Player.Character
+        if Character then
+            local Tool = Player.Character:FindFirstChildOfClass("Tool")
+            if Tool and Tool:FindFirstChild("Handle") then
+                -- Check if it's a melee sword (optional: check Tool.Name)
+                if Tool:FindFirstChild("Sword") or Tool.Name:match("Sword") then
+                    -- Fire the equipped tool's "Activate" event
+                    Tool:Activate()
+                end
+            end
+        end
+    end
+end)
+
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
     Icon = "solar:home-2-bold", -- optional
