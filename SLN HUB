@@ -209,103 +209,60 @@ local Button = Tab:Button({
     end
 })
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
-
-local LP = Players.LocalPlayer
-local AutoM1 = false
-local M1Loop
-
 Tab:Toggle({
-    Title = "Auto M1 Attack",
-    Desc = "Melee / Sword / Fruit",
+    Title = "Auto M1 (REAL)",
+    Desc = "Blox Fruits Damage",
     Icon = "",
     Type = "Toggle",
     Value = false,
     Callback = function(v)
         AutoM1 = v
-        if v then
-            startM1()
-        else
-            stopM1()
-        end
     end
 })
 
-local function getTool()
-    local c = LP.Character
-    if not c then return end
-    for _,v in pairs(c:GetChildren()) do
-        if v:IsA("Tool") then
-            return v
-        end
-    end
+local CombatFramework = require(game:GetService("Players").LocalPlayer.PlayerScripts:WaitForChild("CombatFramework"))
+local CombatFrameworkR = getupvalues(CombatFramework)[2]
+local RigController = CombatFrameworkR.activeController
+
+local function Attack()
+    if not RigController or not RigController.attack then return end
+
+    RigController.timeToNextAttack = 0
+    RigController.hitboxMagnitude = 60 -- range
+    RigController.attack()
 end
 
-local function getTarget()
-    local c = LP.Character
-    local hrp = c and c:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+local function GetTargets()
+    local targets = {}
 
-    local best, dist = nil, math.huge
+    for _,v in pairs(workspace.Enemies:GetChildren()) do
+        if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+            table.insert(targets, v.HumanoidRootPart)
+        end
+    end
 
-    -- NPC first
-    for _,m in pairs(workspace.Enemies:GetChildren()) do
-        local h = m:FindFirstChild("Humanoid")
-        local r = m:FindFirstChild("HumanoidRootPart")
-        if h and r and h.Health > 0 then
-            local d = (hrp.Position - r.Position).Magnitude
-            if d < dist then
-                dist, best = d, r
+    for _,p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") then
+            if p.Character.Humanoid.Health > 0 then
+                table.insert(targets, p.Character.HumanoidRootPart)
             end
         end
     end
 
-    -- Players
-    for _,p in pairs(Players:GetPlayers()) do
-        if p ~= LP and p.Character then
-            local h = p.Character:FindFirstChild("Humanoid")
-            local r = p.Character:FindFirstChild("HumanoidRootPart")
-            if h and r and h.Health > 0 then
-                local d = (hrp.Position - r.Position).Magnitude
-                if d < dist then
-                    dist, best = d, r
-                end
-            end
-        end
-    end
-
-    return best
+    return targets
 end
 
-function startM1()
-    if M1Loop then M1Loop:Disconnect() end
+local RunService = game:GetService("RunService")
+local AutoM1 = false
 
-    M1Loop = RunService.Heartbeat:Connect(function()
-        if not AutoM1 then return end
-        if not getTool() then return end
+RunService.Heartbeat:Connect(function()
+    if not AutoM1 then return end
+    if not game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool") then return end
 
-        local target = getTarget()
-        if not target then return end
-
-        -- Face target
-        local hrp = LP.Character.HumanoidRootPart
-        hrp.CFrame = CFrame.new(hrp.Position, target.Position)
-
-        -- REAL M1 CLICK
-        VirtualUser:Button1Down(Vector2.new(0,0))
-        task.wait(0.08)
-        VirtualUser:Button1Up(Vector2.new(0,0))
-    end)
-end
-
-function stopM1()
-    if M1Loop then
-        M1Loop:Disconnect()
-        M1Loop = nil
-    end
-end
+    -- inject targets
+    RigController.hitboxMagnitude = 60
+    RigController.attack()
+end)
 
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
