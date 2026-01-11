@@ -209,60 +209,34 @@ local Button = Tab:Button({
     end
 })
 
-Tab:Toggle({
-    Title = "Auto M1 (REAL)",
-    Desc = "Blox Fruits Damage",
+-- Assuming you have a function to handle auto attack
+local function autoAttack(isActive)
+    if isActive then
+        -- Code to initiate auto attack
+        print("Auto Attack Enabled")
+        -- Replace with actual auto attack logic
+        while Toggle.Value do
+            -- Replace with your attack function (e.g., attackEnemy())
+            attackEnemy()
+            wait(0.1) -- Adjust the wait time as necessary
+        end
+    else
+        print("Auto Attack Disabled")
+        -- Code to stop auto attack if necessary
+    end
+end
+
+local Toggle = Tab:Toggle({
+    Title = "Auto Attack",
+    Desc = "",
     Icon = "",
     Type = "Toggle",
-    Value = false,
-    Callback = function(v)
-        AutoM1 = v
+    Value = false, -- default value
+    Callback = function(state) 
+        print("Toggle Activated: " .. tostring(state))
+        autoAttack(state) -- Call the auto attack function with the toggle state
     end
 })
-
-local CombatFramework = require(game:GetService("Players").LocalPlayer.PlayerScripts:WaitForChild("CombatFramework"))
-local CombatFrameworkR = getupvalues(CombatFramework)[2]
-local RigController = CombatFrameworkR.activeController
-
-local function Attack()
-    if not RigController or not RigController.attack then return end
-
-    RigController.timeToNextAttack = 0
-    RigController.hitboxMagnitude = 60 -- range
-    RigController.attack()
-end
-
-local function GetTargets()
-    local targets = {}
-
-    for _,v in pairs(workspace.Enemies:GetChildren()) do
-        if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-            table.insert(targets, v.HumanoidRootPart)
-        end
-    end
-
-    for _,p in pairs(game.Players:GetPlayers()) do
-        if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") then
-            if p.Character.Humanoid.Health > 0 then
-                table.insert(targets, p.Character.HumanoidRootPart)
-            end
-        end
-    end
-
-    return targets
-end
-
-local RunService = game:GetService("RunService")
-local AutoM1 = false
-
-RunService.Heartbeat:Connect(function()
-    if not AutoM1 then return end
-    if not game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool") then return end
-
-    -- inject targets
-    RigController.hitboxMagnitude = 60
-    RigController.attack()
-end)
 
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
