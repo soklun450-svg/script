@@ -211,36 +211,108 @@ local Button = Tab:Button({
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+local LocalPlayer = Players.LocalPlayer
 
-local Player = Players.LocalPlayer
-
--- Auto M1 toggle (on by default)
-local AutoM1 = true
+local AutoAttack = false
+local AttackConnection
 
 local Toggle = Tab:Toggle({
-    Title = "Auto M1 Attack",
-    Desc = "",
-    Icon = "bird",
+    Title = "Auto Attack",
+    Desc = "Melee / Sword / Fruit",
+    Icon = "",
     Type = "Toggle",
-    Value = AutoM1, -- Auto ON
+    Value = false,
     Callback = function(state)
-        AutoM1 = state
-        print("Auto M1 Activated:", state)
+        AutoAttack = state
+
+        if state then
+            startAutoAttack()
+        else
+            stopAutoAttack()
+        end
     end
 })
 
--- Auto M1 loop
-RunService.RenderStepped:Connect(function()
-    if AutoM1 then
-        local Tool = Player.Character and Player.Character:FindFirstChildOfClass("Tool")
-        if Tool and Tool:FindFirstChild("Handle") then
-            -- Only melee swords or Blox Fruits
-            if Tool.Name:match("Sword") or Tool.Name:match("BloxFruit") then
-                Tool:Activate() -- Auto M1
+function getEquippedTool()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    for _,v in pairs(char:GetChildren()) do
+        if v:IsA("Tool") then
+            return v
+        end
+    end
+end
+
+function getNearestTarget()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local closest, dist = nil, math.huge
+
+    for _,v in pairs(workspace.Enemies:GetChildren()) do
+        local h = v:FindFirstChild("Humanoid")
+        local r = v:FindFirstChild("HumanoidRootPart")
+        if h and h.Health > 0 and r then
+            local d = (hrp.Position - r.Position).Magnitude
+            if d < dist then
+                dist = d
+                closest = r
             end
         end
     end
-end)
+
+    -- player fallback
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            local h = plr.Character:FindFirstChild("Humanoid")
+            local r = plr.Character:FindFirstChild("HumanoidRootPart")
+            if h and h.Health > 0 and r then
+                local d = (hrp.Position - r.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    closest = r
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+function startAutoAttack()
+    if AttackConnection then AttackConnection:Disconnect() end
+
+    AttackConnection = RunService.Heartbeat:Connect(function()
+        if not AutoAttack then return end
+
+        local tool = getEquippedTool()
+        if not tool then return end
+
+        local target = getNearestTarget()
+        if not target then return end
+
+        -- Face target
+        LocalPlayer.Character.HumanoidRootPart.CFrame =
+            CFrame.new(
+                LocalPlayer.Character.HumanoidRootPart.Position,
+                target.Position
+            )
+
+        -- Real M1 attack
+        VirtualUser:Button1Down(Vector2.new(0,0))
+        task.wait(0.1)
+        VirtualUser:Button1Up(Vector2.new(0,0))
+    end)
+end
+
+function stopAutoAttack()
+    if AttackConnection then
+        AttackConnection:Disconnect()
+        AttackConnection = nil
+    end
+end
 
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
