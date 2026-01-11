@@ -209,26 +209,43 @@ local Button = Tab:Button({
     end
 })
 
--- Assuming you have a function to handle auto attack
+local equippedWeapon = nil -- Store the currently equipped weapon
+
+-- Function to equip a weapon
+local function equipWeapon(weaponName)
+    -- Code to equip the weapon (replace with actual game logic)
+    equippedWeapon = weaponName
+    print("Equipped: " .. weaponName)
+end
+
+-- Function to auto attack
 local function autoAttack(isActive)
     if isActive then
-        -- Code to initiate auto attack
         print("Auto Attack Enabled")
-        -- Replace with actual auto attack logic
         while Toggle.Value do
-            -- Replace with your attack function (e.g., attackEnemy())
-            attackEnemy()
-            wait(0.1) -- Adjust the wait time as necessary
+            if equippedWeapon then
+                -- Replace with your logic to find NPCs/players to attack
+                local targets = findTargets() -- This should return a list of targets
+
+                for _, target in ipairs(targets) do
+                    -- Code to attack the target (replace with actual attack logic)
+                    attackTarget(target)
+                    wait(0.1) -- Adjust the wait time as necessary
+                end
+            else
+                print("No weapon equipped. Auto Attack Disabled.")
+                break
+            end
+            wait(0.1) -- Prevents hammering the loop too fast
         end
     else
         print("Auto Attack Disabled")
-        -- Code to stop auto attack if necessary
     end
 end
 
 local Toggle = Tab:Toggle({
     Title = "Auto Attack",
-    Desc = "",
+    Desc = "Toggle to enable or disable auto attack with equipped weapon",
     Icon = "",
     Type = "Toggle",
     Value = false, -- default value
@@ -237,6 +254,28 @@ local Toggle = Tab:Toggle({
         autoAttack(state) -- Call the auto attack function with the toggle state
     end
 })
+
+-- Example function to equip a melee weapon
+local function onEquipMelee()
+    equipWeapon("Melee Sword") -- Replace with the actual weapon name
+end
+
+-- Example function to find targets (NPCs or players)
+local function findTargets()
+    local targets = {} -- This should be filled with actual target objects
+    -- Logic to detect nearby NPCs or players and add them to the targets table
+    return targets
+end
+
+-- Example function to attack a target
+local function attackTarget(target)
+    -- Replace with actual attack logic
+    print("Attacking: " .. target.Name)
+end
+
+-- Bind the weapon equip function to an appropriate event
+-- Example: onEquipMelee() -- Call this function when the weapon is equipped
+
 
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
