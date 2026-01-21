@@ -223,7 +223,7 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
 local Button = Tab:Button({
-    Title = "🌊 Ultra Infinity Safe Zone",
+    Title = "🕳️ Ultra Infinity Hole Safe",
     Color = Color3.fromHex("#a2ff30"),
     Justify = "Center",
     IconAlign = "Left",
@@ -232,18 +232,14 @@ local Button = Tab:Button({
         local Character = Player.Character or Player.CharacterAdded:Wait()
         local HRP = Character:WaitForChild("HumanoidRootPart")
 
-        -- 🧠 Brainrot Escape Tsunami logic
-        local FORWARD_DISTANCE = 140   -- go ahead of wave
-        local SAFE_Y = 90              -- above tsunami
+        -- 🧠 Escape Tsunami brainrot (DOWN HOLE)
+        local DOWN_DISTANCE = 120   -- go under map / hole depth
 
-        local forward = HRP.CFrame.LookVector
-        local targetPos = HRP.Position 
-            + (forward * FORWARD_DISTANCE)
-            + Vector3.new(0, SAFE_Y, 0)
+        local targetPos = HRP.Position - Vector3.new(0, DOWN_DISTANCE, 0)
 
         local tweenInfo = TweenInfo.new(
-            0.85, -- fast but smooth
-            Enum.EasingStyle.Quint,
+            0.7, -- fast + smooth
+            Enum.EasingStyle.Quart,
             Enum.EasingDirection.Out
         )
 
