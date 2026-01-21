@@ -218,38 +218,43 @@ local Tab = Window:Tab({
     Locked = false,
 })
 
-local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 
+local AntiTsunami = false
+local HealConnection
+
 local Button = Tab:Button({
-    Title = "🕳️ Ultra Infinity Hole Safe",
+    Title = "🌊 Ultra Infinity Anti Tsunami",
     Color = Color3.fromHex("#a2ff30"),
     Justify = "Center",
     IconAlign = "Left",
     Icon = "",
     Callback = function()
+        AntiTsunami = not AntiTsunami
+
         local Character = Player.Character or Player.CharacterAdded:Wait()
-        local HRP = Character:WaitForChild("HumanoidRootPart")
+        local Humanoid = Character:WaitForChild("Humanoid")
 
-        -- 🧠 Escape Tsunami brainrot (DOWN HOLE)
-        local DOWN_DISTANCE = 120   -- go under map / hole depth
+        if AntiTsunami then
+            -- 👑 Ultra Infinity protection
+            Humanoid.BreakJointsOnDeath = false
+            Humanoid.MaxHealth = math.huge
+            Humanoid.Health = Humanoid.MaxHealth
 
-        local targetPos = HRP.Position - Vector3.new(0, DOWN_DISTANCE, 0)
-
-        local tweenInfo = TweenInfo.new(
-            0.7, -- fast + smooth
-            Enum.EasingStyle.Quart,
-            Enum.EasingDirection.Out
-        )
-
-        local tween = TweenService:Create(
-            HRP,
-            tweenInfo,
-            {CFrame = CFrame.new(targetPos)}
-        )
-
-        tween:Play()
+            HealConnection = RunService.Heartbeat:Connect(function()
+                if Humanoid.Health < Humanoid.MaxHealth then
+                    Humanoid.Health = Humanoid.MaxHealth
+                end
+            end)
+        else
+            -- Disable
+            if HealConnection then
+                HealConnection:Disconnect()
+                HealConnection = nil
+            end
+        end
     end
 })
 
