@@ -209,74 +209,6 @@ local Button = Tab:Button({
     end
 })
 
-local equippedWeapon = nil -- Store the currently equipped weapon
-
--- Function to equip a weapon
-local function equipWeapon(weaponName)
-    -- Code to equip the weapon (replace with actual game logic)
-    equippedWeapon = weaponName
-    print("Equipped: " .. weaponName)
-end
-
--- Function to auto attack
-local function autoAttack(isActive)
-    if isActive then
-        print("Auto Attack Enabled")
-        while Toggle.Value do
-            if equippedWeapon then
-                -- Replace with your logic to find NPCs/players to attack
-                local targets = findTargets() -- This should return a list of targets
-
-                for _, target in ipairs(targets) do
-                    -- Code to attack the target (replace with actual attack logic)
-                    attackTarget(target)
-                    wait(0.1) -- Adjust the wait time as necessary
-                end
-            else
-                print("No weapon equipped. Auto Attack Disabled.")
-                break
-            end
-            wait(0.1) -- Prevents hammering the loop too fast
-        end
-    else
-        print("Auto Attack Disabled")
-    end
-end
-
-local Toggle = Tab:Toggle({
-    Title = "Auto Attack",
-    Desc = "Toggle to enable or disable auto attack with equipped weapon",
-    Icon = "",
-    Type = "Toggle",
-    Value = false, -- default value
-    Callback = function(state) 
-        print("Toggle Activated: " .. tostring(state))
-        autoAttack(state) -- Call the auto attack function with the toggle state
-    end
-})
-
--- Example function to equip a melee weapon
-local function onEquipMelee()
-    equipWeapon("Melee Sword") -- Replace with the actual weapon name
-end
-
--- Example function to find targets (NPCs or players)
-local function findTargets()
-    local targets = {} -- This should be filled with actual target objects
-    -- Logic to detect nearby NPCs or players and add them to the targets table
-    return targets
-end
-
--- Example function to attack a target
-local function attackTarget(target)
-    -- Replace with actual attack logic
-    print("Attacking: " .. target.Name)
-end
-
--- Bind the weapon equip function to an appropriate event
--- Example: onEquipMelee() -- Call this function when the weapon is equipped
-
-
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
     Icon = "solar:home-2-bold", -- optional
@@ -284,6 +216,45 @@ local Tab = Window:Tab({
     IconShape = "Square",
     Border = true,
     Locked = false,
+})
+
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
+local Button = Tab:Button({
+    Title = "🌊 Ultra Infinity Safe Zone",
+    Color = Color3.fromHex("#a2ff30"),
+    Justify = "Center",
+    IconAlign = "Left",
+    Icon = "",
+    Callback = function()
+        local Character = Player.Character or Player.CharacterAdded:Wait()
+        local HRP = Character:WaitForChild("HumanoidRootPart")
+
+        -- 🧠 Brainrot Escape Tsunami logic
+        local FORWARD_DISTANCE = 140   -- go ahead of wave
+        local SAFE_Y = 90              -- above tsunami
+
+        local forward = HRP.CFrame.LookVector
+        local targetPos = HRP.Position 
+            + (forward * FORWARD_DISTANCE)
+            + Vector3.new(0, SAFE_Y, 0)
+
+        local tweenInfo = TweenInfo.new(
+            0.85, -- fast but smooth
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.Out
+        )
+
+        local tween = TweenService:Create(
+            HRP,
+            tweenInfo,
+            {CFrame = CFrame.new(targetPos)}
+        )
+
+        tween:Play()
+    end
 })
 
 WindUI:Notify({
