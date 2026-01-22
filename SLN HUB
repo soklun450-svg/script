@@ -209,6 +209,75 @@ local Button = Tab:Button({
     end
 })
 
+local Toggle = Tab:Toggle({
+    Title = "Auto Attack",
+    Desc = "Automatically attacks nearby enemies",
+    Icon = "sword",
+    Type = "Checkbox",
+    Value = false,
+    Callback = function(state)
+        getgenv().AutoAttack = state
+        
+        if state then
+            print("Auto Attack: Enabled")
+            
+            -- Main auto attack loop
+            spawn(function()
+                while getgenv().AutoAttack do
+                    task.wait(0.1)
+                    
+                    pcall(function()
+                        local player = game:GetService("Players").LocalPlayer
+                        local char = player.Character
+                        
+                        if not char or not char:FindFirstChild("HumanoidRootPart") then
+                            return
+                        end
+                        
+                        local hrp = char.HumanoidRootPart
+                        local combat = player.Backpack:FindFirstChild("Combat") or char:FindFirstChild("Combat")
+                        
+                        -- Find nearest enemy
+                        local nearestEnemy = nil
+                        local nearestDistance = 25 -- attack range
+                        
+                        for _, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+                            if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+                                local distance = (hrp.Position - v.HumanoidRootPart.Position).Magnitude
+                                
+                                if distance < nearestDistance then
+                                    nearestDistance = distance
+                                    nearestEnemy = v
+                                end
+                            end
+                        end
+                        
+                        -- Attack if enemy found
+                        if nearestEnemy then
+                            -- Equip combat if not equipped
+                            if combat and combat.Parent == player.Backpack then
+                                char.Humanoid:EquipTool(combat)
+                                task.wait(0.3)
+                            end
+                            
+                            -- Activate attack
+                            local ac = CFrame.new(hrp.Position, nearestEnemy.HumanoidRootPart.Position)
+                            hrp.CFrame = ac
+                            
+                            -- Click/attack
+                            game:GetService("VirtualUser"):CaptureController()
+                            game:GetService("VirtualUser"):Button1Down(Vector2.new(1280, 670))
+                        end
+                    end)
+                end
+            end)
+        else
+            print("Auto Attack: Disabled")
+            getgenv().AutoAttack = false
+        end
+    end
+})
+
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
     Icon = "solar:home-2-bold", -- optional
@@ -216,46 +285,6 @@ local Tab = Window:Tab({
     IconShape = "Square",
     Border = true,
     Locked = false,
-})
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Player = Players.LocalPlayer
-
-local AntiTsunami = false
-local HealConnection
-
-local Button = Tab:Button({
-    Title = "🌊 Ultra Infinity Anti Tsunami",
-    Color = Color3.fromHex("#a2ff30"),
-    Justify = "Center",
-    IconAlign = "Left",
-    Icon = "",
-    Callback = function()
-        AntiTsunami = not AntiTsunami
-
-        local Character = Player.Character or Player.CharacterAdded:Wait()
-        local Humanoid = Character:WaitForChild("Humanoid")
-
-        if AntiTsunami then
-            -- 👑 Ultra Infinity protection
-            Humanoid.BreakJointsOnDeath = false
-            Humanoid.MaxHealth = math.huge
-            Humanoid.Health = Humanoid.MaxHealth
-
-            HealConnection = RunService.Heartbeat:Connect(function()
-                if Humanoid.Health < Humanoid.MaxHealth then
-                    Humanoid.Health = Humanoid.MaxHealth
-                end
-            end)
-        else
-            -- Disable
-            if HealConnection then
-                HealConnection:Disconnect()
-                HealConnection = nil
-            end
-        end
-    end
 })
 
 WindUI:Notify({
