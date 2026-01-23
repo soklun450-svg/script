@@ -209,75 +209,6 @@ local Button = Tab:Button({
     end
 })
 
-local Toggle = Tab:Toggle({
-    Title = "Auto Attack",
-    Desc = "Automatically attacks nearby enemies",
-    Icon = "sword",
-    Type = "Checkbox",
-    Value = false,
-    Callback = function(state)
-        getgenv().AutoAttack = state
-        
-        if state then
-            print("Auto Attack: Enabled")
-            
-            -- Main auto attack loop
-            spawn(function()
-                while getgenv().AutoAttack do
-                    task.wait(0.1)
-                    
-                    pcall(function()
-                        local player = game:GetService("Players").LocalPlayer
-                        local char = player.Character
-                        
-                        if not char or not char:FindFirstChild("HumanoidRootPart") then
-                            return
-                        end
-                        
-                        local hrp = char.HumanoidRootPart
-                        local combat = player.Backpack:FindFirstChild("Combat") or char:FindFirstChild("Combat")
-                        
-                        -- Find nearest enemy
-                        local nearestEnemy = nil
-                        local nearestDistance = 25 -- attack range
-                        
-                        for _, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
-                            if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                                local distance = (hrp.Position - v.HumanoidRootPart.Position).Magnitude
-                                
-                                if distance < nearestDistance then
-                                    nearestDistance = distance
-                                    nearestEnemy = v
-                                end
-                            end
-                        end
-                        
-                        -- Attack if enemy found
-                        if nearestEnemy then
-                            -- Equip combat if not equipped
-                            if combat and combat.Parent == player.Backpack then
-                                char.Humanoid:EquipTool(combat)
-                                task.wait(0.3)
-                            end
-                            
-                            -- Activate attack
-                            local ac = CFrame.new(hrp.Position, nearestEnemy.HumanoidRootPart.Position)
-                            hrp.CFrame = ac
-                            
-                            -- Click/attack
-                            game:GetService("VirtualUser"):CaptureController()
-                            game:GetService("VirtualUser"):Button1Down(Vector2.new(1280, 670))
-                        end
-                    end)
-                end
-            end)
-        else
-            print("Auto Attack: Disabled")
-            getgenv().AutoAttack = false
-        end
-    end
-})
-
 local Tab = Window:Tab({
     Title = "Main farm & other farm",
     Icon = "solar:home-2-bold", -- optional
@@ -286,6 +217,110 @@ local Tab = Window:Tab({
     Border = true,
     Locked = false,
 })
+
+local Section = Tab:Section({ 
+    Title = "Main",
+})
+
+--// Services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+--// CONFIG
+local REQUIRED_RANK = "Ultra Infinity Rank"
+
+--// Rank Check (Attribute OR leaderstats)
+local function hasUltraInfinityRank()
+	-- Attribute check
+	if LocalPlayer:GetAttribute("Rank") == REQUIRED_RANK then
+		return true
+	end
+
+	-- leaderstats check
+	local ls = LocalPlayer:FindFirstChild("leaderstats")
+	if ls and ls:FindFirstChild("Rank") then
+		if tostring(ls.Rank.Value) == REQUIRED_RANK then
+			return true
+		end
+	end
+
+	return false
+end
+
+--// ESP Folder
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "CheeseEscapeESP"
+ESPFolder.Parent = Workspace
+
+--// Create ESP
+local function createESP(obj, color)
+	if obj:FindFirstChild("CE_ESP") then return end
+	local hl = Instance.new("Highlight")
+	hl.Name = "CE_ESP"
+	hl.Adornee = obj
+	hl.FillColor = color
+	hl.OutlineColor = color
+	hl.FillTransparency = 0.35
+	hl.OutlineTransparency = 0
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Parent = ESPFolder
+end
+
+local function clearESP()
+	for _, v in ipairs(ESPFolder:GetChildren()) do
+		v:Destroy()
+	end
+end
+
+local function scanESP()
+	for _, obj in ipairs(Workspace:GetDescendants()) do
+		if obj:IsA("Model") then
+			local n = obj.Name:lower()
+			if n:find("cheese") then
+				createESP(obj, Color3.fromRGB(255,255,0))
+			elseif n:find("rat") then
+				createESP(obj, Color3.fromRGB(255,60,60))
+			end
+		end
+	end
+end
+
+--// WindUI Toggle (RANK LOCKED)
+local ESPToggle = Section:Toggle({
+	Title = "Cheese Escape ESP",
+	Desc = "Ultra Infinity Rank Only",
+	Icon = "",
+	Type = "Toggle",
+	Value = false,
+	Callback = function(state)
+		if not hasUltraInfinityRank() then
+			clearESP()
+			ESPToggle:Set(false) -- force off
+			warn("⛔ Access Denied: Ultra Infinity Rank required")
+			return
+		end
+
+		if state then
+			scanESP()
+		else
+			clearESP()
+		end
+	end
+})
+
+--// Auto ESP for new objects
+Workspace.DescendantAdded:Connect(function(obj)
+	if ESPToggle.Value and hasUltraInfinityRank() and obj:IsA("Model") then
+		task.wait(0.1)
+		local n = obj.Name:lower()
+		if n:find("cheese") then
+			createESP(obj, Color3.fromRGB(255,255,0))
+		elseif n:find("rat") then
+			createESP(obj, Color3.fromRGB(255,60,60))
+		end
+	end
+end)
 
 WindUI:Notify({
     Title = "SLN Hub",
