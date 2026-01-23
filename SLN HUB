@@ -224,113 +224,74 @@ local Section = Tab:Section({
 
 --// Services
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
 local LocalPlayer = Players.LocalPlayer
+local Character, HumanoidRootPart
 
---// RANK CONFIG
-local REQUIRED_RANK = "Ultra Infinity Rank"
+--// State
+local NoClipEnabled = false
+local NoClipConnection
 
-local function hasUltraInfinityRank()
-	if LocalPlayer:GetAttribute("Rank") == REQUIRED_RANK then
-		return true
-	end
-
-	local ls = LocalPlayer:FindFirstChild("leaderstats")
-	if ls and ls:FindFirstChild("Rank") then
-		return tostring(ls.Rank.Value) == REQUIRED_RANK
-	end
-
-	return false
+--// Get character safely
+local function setupCharacter(char)
+	Character = char
+	HumanoidRootPart = char:WaitForChild("HumanoidRootPart", 5)
 end
 
---// ESP Folder
-local ESPFolder = Instance.new("Folder")
-ESPFolder.Name = "CE_Horror_ESP"
-ESPFolder.Parent = Workspace
-
---// Create Highlight
-local function createESP(obj, color)
-	if obj:FindFirstChild("CE_ESP") then return end
-
-	local hl = Instance.new("Highlight")
-	hl.Name = "CE_ESP"
-	hl.Adornee = obj
-	hl.FillColor = color
-	hl.OutlineColor = color
-	hl.FillTransparency = 0.35
-	hl.OutlineTransparency = 0
-	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	hl.Parent = ESPFolder
+if LocalPlayer.Character then
+	setupCharacter(LocalPlayer.Character)
 end
 
-local function clearESP()
-	for _, v in ipairs(ESPFolder:GetChildren()) do
-		v:Destroy()
-	end
-end
+LocalPlayer.CharacterAdded:Connect(setupCharacter)
 
---// OLD VERSION SAFE SCAN
-local function scanESP()
-	for _, obj in ipairs(Workspace:GetDescendants()) do
-		local name = obj.Name:lower()
+--// Enable NoClip
+local function enableNoClip()
+	if NoClipConnection then return end
 
-		-- 🧀 CHEESE (old versions sometimes BasePart)
-		if (obj:IsA("BasePart") or obj:IsA("Model")) and name:find("cheese") then
-			createESP(obj, Color3.fromRGB(255, 255, 0))
-		end
-
-		-- 🐀 RAT / MONSTER / ENEMY (old horror naming)
-		if obj:IsA("Model") then
-			if name:find("rat") or name:find("monster") or name:find("enemy") then
-				if obj:FindFirstChildWhichIsA("Humanoid") then
-					createESP(obj, Color3.fromRGB(255, 60, 60))
+	NoClipConnection = RunService.Stepped:Connect(function()
+		if Character then
+			for _, part in ipairs(Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
 				end
+			end
+		end
+	end)
+end
+
+--// Disable NoClip
+local function disableNoClip()
+	if NoClipConnection then
+		NoClipConnection:Disconnect()
+		NoClipConnection = nil
+	end
+
+	if Character then
+		for _, part in ipairs(Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
 			end
 		end
 	end
 end
 
---// WindUI Toggle (LOCKED)
-local ESPToggle = Section:Toggle({
-	Title = "Cheese Escape Horror ESP",
-	Desc = "Ultra Infinity Rank • Old Version",
-	Icon = "eye",
+--// WindUI Toggle
+local Toggle = Section:Toggle({
+	Title = "No Clip",
+	Desc = "Walk through walls",
+	Icon = "ghost",
 	Type = "Toggle",
 	Value = false,
 	Callback = function(state)
-		if not hasUltraInfinityRank() then
-			clearESP()
-			ESPToggle:Set(false)
-			warn("⛔ Ultra Infinity Rank required")
-			return
-		end
-
+		NoClipEnabled = state
 		if state then
-			scanESP()
+			enableNoClip()
 		else
-			clearESP()
+			disableNoClip()
 		end
 	end
 })
-
---// Auto detect (old maps respawn cheese/rat)
-Workspace.DescendantAdded:Connect(function(obj)
-	if not ESPToggle.Value then return end
-	if not hasUltraInfinityRank() then return end
-
-	task.wait(0.15)
-	local name = obj.Name:lower()
-
-	if (obj:IsA("BasePart") or obj:IsA("Model")) and name:find("cheese") then
-		createESP(obj, Color3.fromRGB(255, 255, 0))
-	end
-
-	if obj:IsA("Model") and (name:find("rat") or name:find("monster") or name:find("enemy")) then
-		if obj:FindFirstChildWhichIsA("Humanoid") then
-			createESP(obj, Color3.fromRGB(255, 60, 60))
-		end
-	end
-end)
 
 WindUI:Notify({
     Title = "SLN Hub",
