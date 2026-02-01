@@ -15,13 +15,14 @@ local MobileButton = Minimizer:CreateMobileMinimizer({
   BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 })
 
+-- Redz Lib v5 tab
 local Tab = Window:MakeTab({
-    Name = "Farm",
+    Name = "Auto Farm",
     Icon = "rbxassetid://4483345998"
 })
 
--- args
-local args = {
+-- ===== Exercise args =====
+local exerciseArgs = {
     workspace:WaitForChild("World")
         :WaitForChild("World2")
         :WaitForChild("Area7")
@@ -29,26 +30,51 @@ local args = {
         :WaitForChild("\232\140\132\229\173\144")
 }
 
--- state
-getgenv().AutoExercise = false
+-- ===== Win Race args =====
+local raceArgs = {100000} -- 100k wins
 
+-- ===== Loop states =====
+getgenv().AutoExercise = false
+getgenv().AutoWinRace = false
+
+-- ===== Exercise Toggle =====
 Tab:AddToggle({
-    Name = "Auto Farm",
+    Name = "Auto Exercise",
     Default = false,
     Callback = function(Value)
         getgenv().AutoExercise = Value
-
         if Value then
             task.spawn(function()
                 while task.wait() do
                     if not getgenv().AutoExercise then break end
-
                     game:GetService("ReplicatedStorage")
                         :WaitForChild("Remote")
                         :WaitForChild("Event")
                         :WaitForChild("Game")
                         :WaitForChild("[C-S]PlayerExercise")
-                        :FireServer(unpack(args))
+                        :FireServer(unpack(exerciseArgs))
+                end
+            end)
+        end
+    end
+})
+
+-- ===== Win Race Toggle =====
+Tab:AddToggle({
+    Name = "Auto Win Race",
+    Default = false,
+    Callback = function(Value)
+        getgenv().AutoWinRace = Value
+        if Value then
+            task.spawn(function()
+                while task.wait(0.1) do -- ultra fast, claim 100k wins repeatedly
+                    if not getgenv().AutoWinRace then break end
+                    game:GetService("ReplicatedStorage")
+                        :WaitForChild("Remote")
+                        :WaitForChild("Event")
+                        :WaitForChild("Game")
+                        :WaitForChild("[C-S]PlayerWinRace")
+                        :FireServer(unpack(raceArgs))
                 end
             end)
         end
