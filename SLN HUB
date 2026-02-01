@@ -90,43 +90,47 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 
+local Noclip = false
+local Conn
+
+local function ApplyNoclip()
+	local char = Player.Character
+	if not char then return end
+
+	for _, part in ipairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = false
+			part.CanTouch = false
+			part.CanQuery = false
+		end
+	end
+end
+
+local function SetNoclip(state)
+	Noclip = state
+
+	if Conn then
+		Conn:Disconnect()
+		Conn = nil
+	end
+
+	if state then
+		Conn = RunService.Stepped:Connect(ApplyNoclip)
+	end
+end
+
+-- Respawn safe
+Player.CharacterAdded:Connect(function()
+	if Noclip then
+		task.wait(0.15)
+		SetNoclip(true)
+	end
+end)
+
 Tab:AddToggle({
-	Name = "Noclip (Safe)",
+	Name = "Noclip (Walk Through)",
 	Default = false,
 	Callback = function(Value)
 		SetNoclip(Value)
 	end
 })
-
-local Noclip = false
-local NoclipConn
-
-local function SetNoclip(state)
-	Noclip = state
-
-	if NoclipConn then
-		NoclipConn:Disconnect()
-		NoclipConn = nil
-	end
-
-	if state then
-		NoclipConn = RunService.Stepped:Connect(function()
-			local char = Player.Character
-			if not char then return end
-
-			for _, v in ipairs(char:GetDescendants()) do
-				if v:IsA("BasePart") then
-					v.CanCollide = false
-				end
-			end
-		end)
-	end
-end
-
--- auto re-apply after respawn (safe)
-Player.CharacterAdded:Connect(function()
-	if Noclip then
-		task.wait(0.2)
-		SetNoclip(true)
-	end
-end)
