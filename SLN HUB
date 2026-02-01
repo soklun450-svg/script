@@ -39,7 +39,7 @@ getgenv().AutoWinRace = false
 
 -- ===== Exercise Toggle =====
 Tab:AddToggle({
-    Name = "Auto Exercise",
+    Name = "Auto Eat",
     Default = false,
     Callback = function(Value)
         getgenv().AutoExercise = Value
@@ -61,7 +61,7 @@ Tab:AddToggle({
 
 -- ===== Win Race Toggle =====
 Tab:AddToggle({
-    Name = "Auto Win Race",
+    Name = "Auto Collect Wins",
     Default = false,
     Callback = function(Value)
         getgenv().AutoWinRace = Value
@@ -80,3 +80,53 @@ Tab:AddToggle({
         end
     end
 })
+
+local Tab = Window:MakeTab({
+  Title = "Settings",
+  Icon = "settings"
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+
+Tab:AddToggle({
+	Name = "Noclip (Safe)",
+	Default = false,
+	Callback = function(Value)
+		SetNoclip(Value)
+	end
+})
+
+local Noclip = false
+local NoclipConn
+
+local function SetNoclip(state)
+	Noclip = state
+
+	if NoclipConn then
+		NoclipConn:Disconnect()
+		NoclipConn = nil
+	end
+
+	if state then
+		NoclipConn = RunService.Stepped:Connect(function()
+			local char = Player.Character
+			if not char then return end
+
+			for _, v in ipairs(char:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CanCollide = false
+				end
+			end
+		end)
+	end
+end
+
+-- auto re-apply after respawn (safe)
+Player.CharacterAdded:Connect(function()
+	if Noclip then
+		task.wait(0.2)
+		SetNoclip(true)
+	end
+end)
