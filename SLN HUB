@@ -16,6 +16,41 @@ local MobileButton = Minimizer:CreateMobileMinimizer({
 })
 
 local Tab = Window:MakeTab({
-  Title = "Farm",
-  Icon = "Home"
+    Name = "Farm",
+    Icon = "rbxassetid://4483345998"
+})
+
+-- args
+local args = {
+    workspace:WaitForChild("World")
+        :WaitForChild("World2")
+        :WaitForChild("Area7")
+        :WaitForChild("Exercise")
+        :WaitForChild("\232\140\132\229\173\144")
+}
+
+-- state
+getgenv().AutoExercise = false
+
+Tab:AddToggle({
+    Name = "Auto Farm",
+    Default = false,
+    Callback = function(Value)
+        getgenv().AutoExercise = Value
+
+        if Value then
+            task.spawn(function()
+                while task.wait() do
+                    if not getgenv().AutoExercise then break end
+
+                    game:GetService("ReplicatedStorage")
+                        :WaitForChild("Remote")
+                        :WaitForChild("Event")
+                        :WaitForChild("Game")
+                        :WaitForChild("[C-S]PlayerExercise")
+                        :FireServer(unpack(args))
+                end
+            end)
+        end
+    end
 })
