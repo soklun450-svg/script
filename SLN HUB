@@ -26,90 +26,140 @@ local Tab = Window:MakeTab({
 })
 
 Tab:AddToggle({
-  Name = "Auto M1 Attack (High Range)",
-  Default = false,
-  Callback = function(Value)
-    getgenv().AutoM1HighRange = Value
-  end
+    Name = "Auto Attack",
+    Default = false,
+    Callback = function(Value)
+        getgenv().AutoAttackEnabled = Value
+    end
 })
 
--- Auto M1 High Range Logic (place this right after your RedzLib v5 setup / window creation)
+Tab:AddSlider({
+    Name = "Attack Range",
+    Min = 10,
+    Max = 500,
+    Default = 150,
+    Increase = 10,
+    Callback = function(Value)
+        getgenv().AttackRange = Value
+    end
+})
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
 local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
 local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
 local RegisterHit = Net:WaitForChild("RE/RegisterHit")
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local Enemies = Workspace:WaitForChild("Enemies")
+local Characters = Workspace:WaitForChild("Characters")
 
-getgenv().AutoM1HighRange = false
+-- GetSessionID function (common in BF scripts)
+local function GetSessionID()
+    local SendHitsToServer = getrenv()._G.SendHitsToServer
+    if SendHitsToServer then
+        local CombatThread = getupvalue(SendHitsToServer, 1)
+        local UserIDSlice = tostring(LocalPlayer.UserId):sub(2, 4)
+        local MemorySlice = tostring(CombatThread):sub(11, 15)
+        return UserIDSlice .. MemorySlice
+    end
+    -- Fallback
+    return tostring(LocalPlayer.UserId):sub(2, 4) .. tostring(math.random(10000, 99999))
+end
 
+-- Check if tool is Melee/Sword/Blox Fruit/Gun
+local function IsValidTool(tool)
+    if not tool or not tool.Parent then return false end
+    local toolTip = tool:GetAttribute("ToolTip") or tool.ToolTip
+    if not toolTip then return false end
+    local lowerTip = toolTip:lower()
+    return lowerTip:find("melee") or lowerTip:find("sword") or lowerTip:find("blox fruit") or lowerTip:find("fruit") or lowerTip:find("gun")
+end
+
+-- Equip valid tool if none equipped
+local function EquipValidTool()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hasValid = false
+    for _, tool in pairs(char:GetChildren()) do
+        if tool:IsA("Tool") and IsValidTool(tool) then
+            tool.Parent = char
+            hasValid = true
+            break
+        end
+    end
+    return hasValid
+end
+
+-- Main auto attack loop
 task.spawn(function()
-  while task.wait(0.07) do  -- Fast spam rate (adjust if too aggressive)
-    if not getgenv().AutoM1HighRange then continue end
-    
-    local character = LocalPlayer.Character
-    if not (character and character:FindFirstChild("HumanoidRootPart")) then continue end
-    
-    local tool = character:FindFirstChildOfClass("Tool")
-    if not tool then continue end
-    
-    -- Only activate for melee, sword, blox fruit, gun (exact ToolTip match like official BF)
-    local tip = tool.ToolTip
-    if not (tip == "Melee" or tip == "Sword" or tip == "Blox Fruit" or tip == "Gun") then continue end
-    
-    local myRoot = character.HumanoidRootPart
-    local myPos = myRoot.Position
-    local range = 300  -- HIGH RANGE (any near me, 300 studs bypass)
-    
-    local hitTargets = {}
-    
-    -- NPC enemies
-    local enemiesFolder = workspace:FindFirstChild("Enemies")
-    if enemiesFolder then
-      for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-        if enemy:IsA("Model") and enemy \~= character and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
-          local dist = (enemy.HumanoidRootPart.Position - myPos).Magnitude
-          if dist <= range and dist > 4 then
-            table.insert(hitTargets, enemy)
-          end
+    while true do
+        if getgenv().AutoAttackEnabled then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") and char.Humanoid.Health > 0 then
+                local root = char.HumanoidRootPart
+                local hrpPos = root.Position
+
+                -- Equip tool if needed
+                if not char:FindFirstChildOfClass("Tool") then
+                    EquipValidTool()
+                end
+
+                -- Find nearest enemy/player
+                local nearestDist = getgenv().AttackRange or 150
+                local nearestEnemy = nil
+                local nearestPart = nil
+
+                -- Check Enemies
+                for _, enemy in pairs(Enemies:GetChildren()) do
+                    if enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                        local dist = (enemy.HumanoidRootPart.Position - hrpPos).Magnitude
+                        if dist < nearestDist then
+                            nearestDist = dist
+                            nearestEnemy = enemy
+                            nearestPart = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("Head") or enemy:FindFirstChildOfClass("BasePart")
+                        end
+                    end
+                end
+
+                -- Check Characters (players/NPCs)
+                for _, chara in pairs(Characters:GetChildren()) do
+                    if chara \~= char and chara:FindFirstChild("HumanoidRootPart") and chara:FindFirstChild("Humanoid") and chara.Humanoid.Health > 0 then
+                        local dist = (chara.HumanoidRootPart.Position - hrpPos).Magnitude
+                        if dist < nearestDist then
+                            nearestDist = dist
+                            nearestEnemy = chara
+                            nearestPart = chara:FindFirstChild("HumanoidRootPart") or chara:FindFirstChild("Head") or chara:FindFirstChildOfClass("BasePart")
+                        end
+                    end
+                end
+
+                if nearestEnemy and nearestPart then
+                    -- Teleport close (high range)
+                    root.CFrame = nearestPart.CFrame * CFrame.new(0, 5, -10)
+                    root.Velocity = Vector3.new(0, 0, 0)
+
+                    -- Fire remotes
+                    pcall(function()
+                        RegisterAttack:FireServer(0.5)
+                        task.wait(0.1)
+                        local args = {
+                            nearestPart,  -- Hit part (use Head or leg, but any works)
+                            {},           -- Effects?
+                            nil,
+                            GetSessionID()
+                        }
+                        RegisterHit:FireServer(unpack(args))
+                    end)
+                end
+            end
         end
-      end
+        task.wait(0.1)  -- Fast loop for high speed attack
     end
-    
-    -- Other players (Characters folder or direct)
-    local charsFolder = workspace:FindFirstChild("Characters")
-    if charsFolder then
-      for _, char in ipairs(charsFolder:GetChildren()) do
-        if char:IsA("Model") and char \~= character and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and char:FindFirstChild("HumanoidRootPart") then
-          local dist = (char.HumanoidRootPart.Position - myPos).Magnitude
-          if dist <= range and dist > 4 then
-            table.insert(hitTargets, char)
-          end
-        end
-      end
-    end
-    
-    if #hitTargets == 0 then continue end
-    
-    -- M1 Attack (RegisterAttack once per cycle)
-    RegisterAttack:FireServer(0.5)
-    
-    -- Hit EVERY nearby target (any near me gets hit)
-    for _, targetChar in ipairs(hitTargets) do
-      local hitPart = targetChar:FindFirstChild("Head") or targetChar:FindFirstChild("HumanoidRootPart") or targetChar:FindFirstChildWhichIsA("BasePart")
-      if hitPart then
-        -- Your exact remote format, but with real hitPart instead of dummy MeshPart (works better for range)
-        -- {} remains as in your example; [4] = your ID
-        local args = {
-          hitPart,
-          {},
-          [4] = "392ca9d8"
-        }
-        RegisterHit:FireServer(unpack(args))
-      end
-    end
-  end
 end)
 
 Window:Notify({
