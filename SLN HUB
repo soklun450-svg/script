@@ -1,8 +1,8 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/tlredz/Library/refs/heads/main/redz-V5-remake/main.luau"))()
 
 local Window = Library:MakeWindow({
-  Title = "SLN Hub",
-  SubTitle = "SELENA GAMING",
+  Title = "JBT Hub",
+  SubTitle = "jujubotv",
   ScriptFolder = "redz-library-V5"
 })
 
@@ -15,70 +15,9 @@ local MobileButton = Minimizer:CreateMobileMinimizer({
   BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 })
 
--- Redz Lib v5 tab
 local Tab = Window:MakeTab({
-    Name = "Auto Farm",
-    Icon = "rbxassetid://4483345998"
-})
-
--- ===== Exercise args =====
-local exerciseArgs = {
-    workspace:WaitForChild("World")
-        :WaitForChild("World2")
-        :WaitForChild("Area7")
-        :WaitForChild("Exercise")
-        :WaitForChild("\232\140\132\229\173\144")
-}
-
--- ===== Win Race args =====
-local raceArgs = {100000} -- 100k wins
-
--- ===== Loop states =====
-getgenv().AutoExercise = false
-getgenv().AutoWinRace = false
-
--- ===== Exercise Toggle =====
-Tab:AddToggle({
-    Name = "Auto Eat",
-    Default = false,
-    Callback = function(Value)
-        getgenv().AutoExercise = Value
-        if Value then
-            task.spawn(function()
-                while task.wait() do
-                    if not getgenv().AutoExercise then break end
-                    game:GetService("ReplicatedStorage")
-                        :WaitForChild("Remote")
-                        :WaitForChild("Event")
-                        :WaitForChild("Game")
-                        :WaitForChild("[C-S]PlayerExercise")
-                        :FireServer(unpack(exerciseArgs))
-                end
-            end)
-        end
-    end
-})
-
--- ===== Win Race Toggle =====
-Tab:AddToggle({
-    Name = "Auto Collect Wins",
-    Default = false,
-    Callback = function(Value)
-        getgenv().AutoWinRace = Value
-        if Value then
-            task.spawn(function()
-                while task.wait(0.1) do -- ultra fast, claim 100k wins repeatedly
-                    if not getgenv().AutoWinRace then break end
-                    game:GetService("ReplicatedStorage")
-                        :WaitForChild("Remote")
-                        :WaitForChild("Event")
-                        :WaitForChild("Game")
-                        :WaitForChild("[C-S]PlayerWinRace")
-                        :FireServer(unpack(raceArgs))
-                end
-            end)
-        end
-    end
+  Title = "Main",
+  Icon = "Home"
 })
 
 local Tab = Window:MakeTab({
@@ -86,51 +25,9 @@ local Tab = Window:MakeTab({
   Icon = "settings"
 })
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Player = Players.LocalPlayer
-
-local Noclip = false
-local Conn
-
-local function ApplyNoclip()
-	local char = Player.Character
-	if not char then return end
-
-	for _, part in ipairs(char:GetChildren()) do
-		if part:IsA("BasePart") then
-			part.CanCollide = false
-			part.CanTouch = false
-			part.CanQuery = false
-		end
-	end
-end
-
-local function SetNoclip(state)
-	Noclip = state
-
-	if Conn then
-		Conn:Disconnect()
-		Conn = nil
-	end
-
-	if state then
-		Conn = RunService.Stepped:Connect(ApplyNoclip)
-	end
-end
-
--- Respawn safe
-Player.CharacterAdded:Connect(function()
-	if Noclip then
-		task.wait(0.15)
-		SetNoclip(true)
-	end
-end)
-
-Tab:AddToggle({
-	Name = "Noclip (Walk Through)",
-	Default = false,
-	Callback = function(Value)
-		SetNoclip(Value)
-	end
+Window:Notify({
+  Title = "New UI",
+  Content = "this is new UI and Before it is broken",
+  Image = "rbxassetid://10734953451",
+  Duration = 5
 })
