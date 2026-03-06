@@ -1,8 +1,8 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/tlredz/Library/refs/heads/main/redz-V5-remake/main.luau"))()
 
 local Window = Library:MakeWindow({
-  Title = "JBT Hub",
-  SubTitle = "jujubotv",
+  Title = "SK Hub",
+  SubTitle = "STEVEKHMER",
   ScriptFolder = "redz-library-V5"
 })
 
@@ -24,143 +24,6 @@ local Tab = Window:MakeTab({
   Title = "Settings",
   Icon = "settings"
 })
-
-Tab:AddToggle({
-    Name = "Auto Attack",
-    Default = false,
-    Callback = function(Value)
-        getgenv().AutoAttackEnabled = Value
-    end
-})
-
-Tab:AddSlider({
-    Name = "Attack Range",
-    Min = 10,
-    Max = 500,
-    Default = 150,
-    Increase = 10,
-    Callback = function(Value)
-        getgenv().AttackRange = Value
-    end
-})
-
--- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
-
-local LocalPlayer = Players.LocalPlayer
-local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
-local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
-local RegisterHit = Net:WaitForChild("RE/RegisterHit")
-
-local Enemies = Workspace:WaitForChild("Enemies")
-local Characters = Workspace:WaitForChild("Characters")
-
--- GetSessionID function (common in BF scripts)
-local function GetSessionID()
-    local SendHitsToServer = getrenv()._G.SendHitsToServer
-    if SendHitsToServer then
-        local CombatThread = getupvalue(SendHitsToServer, 1)
-        local UserIDSlice = tostring(LocalPlayer.UserId):sub(2, 4)
-        local MemorySlice = tostring(CombatThread):sub(11, 15)
-        return UserIDSlice .. MemorySlice
-    end
-    -- Fallback
-    return tostring(LocalPlayer.UserId):sub(2, 4) .. tostring(math.random(10000, 99999))
-end
-
--- Check if tool is Melee/Sword/Blox Fruit/Gun
-local function IsValidTool(tool)
-    if not tool or not tool.Parent then return false end
-    local toolTip = tool:GetAttribute("ToolTip") or tool.ToolTip
-    if not toolTip then return false end
-    local lowerTip = toolTip:lower()
-    return lowerTip:find("melee") or lowerTip:find("sword") or lowerTip:find("blox fruit") or lowerTip:find("fruit") or lowerTip:find("gun")
-end
-
--- Equip valid tool if none equipped
-local function EquipValidTool()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hasValid = false
-    for _, tool in pairs(char:GetChildren()) do
-        if tool:IsA("Tool") and IsValidTool(tool) then
-            tool.Parent = char
-            hasValid = true
-            break
-        end
-    end
-    return hasValid
-end
-
--- Main auto attack loop
-task.spawn(function()
-    while true do
-        if getgenv().AutoAttackEnabled then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") and char.Humanoid.Health > 0 then
-                local root = char.HumanoidRootPart
-                local hrpPos = root.Position
-
-                -- Equip tool if needed
-                if not char:FindFirstChildOfClass("Tool") then
-                    EquipValidTool()
-                end
-
-                -- Find nearest enemy/player
-                local nearestDist = getgenv().AttackRange or 150
-                local nearestEnemy = nil
-                local nearestPart = nil
-
-                -- Check Enemies
-                for _, enemy in pairs(Enemies:GetChildren()) do
-                    if enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-                        local dist = (enemy.HumanoidRootPart.Position - hrpPos).Magnitude
-                        if dist < nearestDist then
-                            nearestDist = dist
-                            nearestEnemy = enemy
-                            nearestPart = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("Head") or enemy:FindFirstChildOfClass("BasePart")
-                        end
-                    end
-                end
-
-                -- Check Characters (players/NPCs)
-                for _, chara in pairs(Characters:GetChildren()) do
-                    if chara \~= char and chara:FindFirstChild("HumanoidRootPart") and chara:FindFirstChild("Humanoid") and chara.Humanoid.Health > 0 then
-                        local dist = (chara.HumanoidRootPart.Position - hrpPos).Magnitude
-                        if dist < nearestDist then
-                            nearestDist = dist
-                            nearestEnemy = chara
-                            nearestPart = chara:FindFirstChild("HumanoidRootPart") or chara:FindFirstChild("Head") or chara:FindFirstChildOfClass("BasePart")
-                        end
-                    end
-                end
-
-                if nearestEnemy and nearestPart then
-                    -- Teleport close (high range)
-                    root.CFrame = nearestPart.CFrame * CFrame.new(0, 5, -10)
-                    root.Velocity = Vector3.new(0, 0, 0)
-
-                    -- Fire remotes
-                    pcall(function()
-                        RegisterAttack:FireServer(0.5)
-                        task.wait(0.1)
-                        local args = {
-                            nearestPart,  -- Hit part (use Head or leg, but any works)
-                            {},           -- Effects?
-                            nil,
-                            GetSessionID()
-                        }
-                        RegisterHit:FireServer(unpack(args))
-                    end)
-                end
-            end
-        end
-        task.wait(0.1)  -- Fast loop for high speed attack
-    end
-end)
 
 Window:Notify({
   Title = "New UI",
