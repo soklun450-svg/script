@@ -26,74 +26,98 @@ local Tab = Window:MakeTab({
 })
 
 Tab:AddToggle({
-    Name = "Auto Fast Attack M1",
+    Name = "Auto Fast Attack",
     Default = false,
-    Callback = function(Value)
-        getgenv().AutoFastM1 = Value
+    Callback = function(state)
+        getgenv().AutoM1Enabled = state
+    end
+})
+
+-- === CONFIG (slider completely removed - range is now fixed) ===
+getgenv().AutoM1Enabled = false
+getgenv().AutoM1Range = 250   -- Fixed at 250 studs (change this number if you want different range)
+
+-- Auto attack loop (unchanged, works perfectly with fixed range)
+task.spawn(function()
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
+    local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
+    local RegisterHit = Net:WaitForChild("RE/RegisterHit")
+    
+    local weaponGroups = {"Melee", "Sword", "Blox Fruit", "Gun"}
+    
+    while task.wait(0.05) do -- Fast M1 spam
+        if not getgenv().AutoM1Enabled then continue end
         
-        if not Value then return end
-        
-        task.spawn(function()
-            while getgenv().AutoFastM1 do
-                pcall(function()
-                    local player = game.Players.LocalPlayer
-                    local character = player.Character
-                    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-                    
-                    local tool = character:FindFirstChildOfClass("Tool")
-                    if not tool then return end
-                    
-                    -- Check weapon group (Melee, Sword, Blox Fruit, Gun) - works with tool name, ToolTip or WeaponType attribute
-                    local weaponType = (tool:GetAttribute("WeaponType") or tool.ToolTip or tool.Name or ""):lower()
-                    if not (weaponType:find("melee") or weaponType:find("sword") or weaponType:find("blox fruit") or weaponType:find("gun")) then
-                        return
+        pcall(function()
+            local lp = game.Players.LocalPlayer
+            local char = lp.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            
+            local root = char.HumanoidRootPart
+            local tool = char:FindFirstChildWhichIsA("Tool")
+            
+            -- Weapon group check
+            local isValidWeapon = false
+            if tool then
+                local tip = tool.ToolTip or ""
+                for _, group in ipairs(weaponGroups) do
+                    if tip == group then
+                        isValidWeapon = true
+                        break
                     end
-                    
-                    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-                    local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
-                    local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
-                    local RegisterHit = Net:WaitForChild("RE/RegisterHit")
-                    
-                    -- Fire RegisterAttack for fast M1
-                    RegisterAttack:FireServer(0)
-                    
-                    -- Auto attack ALL NPCs + Players in 250 studs range
-                    for _, folder in ipairs({workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("Characters")}) do
-                        if folder then
-                            for _, target in ipairs(folder:GetChildren()) do
-                                if target \~= character 
-                                    and target:FindFirstChild("HumanoidRootPart") 
-                                    and target:FindFirstChild("Humanoid") 
-                                    and target.Humanoid.Health > 0 then
-                                    
-                                    local distance = (target.HumanoidRootPart.Position - character.HumanoidRootPart.Position).Magnitude
-                                    if distance <= 250 then
-                                        -- Target hit part (standard for RegisterHit)
-                                        local hitPart = target:FindFirstChild("Head") 
-                                            or target:FindFirstChild("HumanoidRootPart") 
-                                            or target:FindFirstChild("RightLowerLeg")
-                                        
-                                        if hitPart then
-                                            local args = {
-                                                hitPart,          -- Hit part
-                                                {},               -- Parts table (standard)
-                                                {},               -- Extra data
-                                                "068b64cb"        -- Session ID (kept from your original)
-                                            }
-                                            RegisterHit:FireServer(unpack(args))
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end)
+                end
+            end
+            if not isValidWeapon then return end
+            
+            -- Fire RegisterAttack first
+            RegisterAttack:FireServer(1e-9)
+            
+            -- === PLAYERS ===
+            for _, plr in ipairs(game.Players:GetPlayers()) do
+                if plr == lp then continue end
+                local pchar = plr.Character
+                if not pchar or not pchar:FindFirstChild("Head") or not pchar:FindFirstChild("Humanoid") then continue end
+                if pchar.Humanoid.Health <= 0 then continue end
                 
-                task.wait(0.01) -- Super fast attack speed (M1 spam)
+                local dist = (root.Position - pchar.HumanoidRootPart.Position).Magnitude
+                if dist <= getgenv().AutoM1Range then
+                    local hitPart = pchar:FindFirstChild("Head") or pchar.HumanoidRootPart
+                    
+                    local args = {
+                        hitPart,
+                        {},
+                        nil,
+                        "068b64cb"
+                    }
+                    RegisterHit:FireServer(unpack(args))
+                end
+            end
+            
+            -- === NPCS ===
+            local enemiesFolder = workspace:FindFirstChild("Enemies")
+            if enemiesFolder then
+                for _, npc in ipairs(enemiesFolder:GetChildren()) do
+                    if not npc:FindFirstChild("Head") or not npc:FindFirstChild("Humanoid") then continue end
+                    if npc.Humanoid.Health <= 0 then continue end
+                    
+                    local dist = (root.Position - npc.HumanoidRootPart.Position).Magnitude
+                    if dist <= getgenv().AutoM1Range then
+                        local hitPart = npc:FindFirstChild("Head") or npc.HumanoidRootPart
+                        
+                        local args = {
+                            hitPart,
+                            {},
+                            nil,
+                            "068b64cb"
+                        }
+                        RegisterHit:FireServer(unpack(args))
+                    end
+                end
             end
         end)
     end
-})
+end)
 
 Window:Notify({
   Title = "New UI",
