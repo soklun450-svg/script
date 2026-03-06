@@ -26,72 +26,74 @@ local Tab = Window:MakeTab({
 })
 
 Tab:AddToggle({
-  Name = "Auto M1 Attack",
-  Default = false,
-  Callback = function(Value)
-    getgenv().AutoM1Enabled = Value
-  end
-})
-
--- Auto attack loop (put this once after all UI tabs are made)
-task.spawn(function()
-  local Players = game:GetService("Players")
-  local Workspace = game:GetService("Workspace")
-  local ReplicatedStorage = game:GetService("ReplicatedStorage")
-  
-  local LocalPlayer = Players.LocalPlayer
-  local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
-  local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
-  local RegisterHit = Net:WaitForChild("RE/RegisterHit")
-  
-  while task.wait(0.08) do -- Fast M1 speed
-    if not getgenv().AutoM1Enabled then continue end
-    
-    local character = LocalPlayer.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
-    
-    local root = character.HumanoidRootPart
-    local tool = character:FindFirstChildOfClass("Tool")
-    if not tool then continue end
-    
-    -- Group tool name check (Melee, Sword, Blox Fruit, Gun)
-    local toolType = tool.ToolTip or tool.Name
-    if not (toolType:find("Melee") or toolType:find("Sword") or toolType:find("Blox Fruit") or toolType:find("Gun")) then continue end
-    
-    -- Collect ALL NPCs + Players in 150 studs
-    local targets = {}
-    local baseHitPart = nil
-    
-    for _, folder in ipairs({Workspace.Enemies, Workspace.Characters}) do
-      if folder then
-        for _, target in ipairs(folder:GetChildren()) do
-          if target \~= character and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 and target:FindFirstChild("Head") and target:FindFirstChild("HumanoidRootPart") then
-            local dist = (target.HumanoidRootPart.Position - root.Position).Magnitude
-            if dist <= 150 then
-              table.insert(targets, {target, target.Head})
-              if not baseHitPart then baseHitPart = target.Head end
-            end
-          end
-        end
-      end
-    end
-    
-    if baseHitPart and #targets > 0 then
-      pcall(function()
-        RegisterAttack:FireServer(0) -- Start attack packet
-        task.wait() -- Tiny delay for validation
+    Name = "Auto Fast Attack M1",
+    Default = false,
+    Callback = function(Value)
+        getgenv().AutoFastM1 = Value
         
-        local args = {
-          baseHitPart,
-          targets,
-          {},
-          "0684f062" -- YOUR NEW SESSION ID (hardcoded)
-        }
-        RegisterHit:FireServer(unpack(args))
-      end)
+        if not Value then return end
+        
+        task.spawn(function()
+            while getgenv().AutoFastM1 do
+                pcall(function()
+                    local player = game.Players.LocalPlayer
+                    local character = player.Character
+                    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+                    
+                    local tool = character:FindFirstChildOfClass("Tool")
+                    if not tool then return end
+                    
+                    -- Check weapon group (Melee, Sword, Blox Fruit, Gun) - works with tool name, ToolTip or WeaponType attribute
+                    local weaponType = (tool:GetAttribute("WeaponType") or tool.ToolTip or tool.Name or ""):lower()
+                    if not (weaponType:find("melee") or weaponType:find("sword") or weaponType:find("blox fruit") or weaponType:find("gun")) then
+                        return
+                    end
+                    
+                    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+                    local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
+                    local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
+                    local RegisterHit = Net:WaitForChild("RE/RegisterHit")
+                    
+                    -- Fire RegisterAttack for fast M1
+                    RegisterAttack:FireServer(0)
+                    
+                    -- Auto attack ALL NPCs + Players in 250 studs range
+                    for _, folder in ipairs({workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("Characters")}) do
+                        if folder then
+                            for _, target in ipairs(folder:GetChildren()) do
+                                if target \~= character 
+                                    and target:FindFirstChild("HumanoidRootPart") 
+                                    and target:FindFirstChild("Humanoid") 
+                                    and target.Humanoid.Health > 0 then
+                                    
+                                    local distance = (target.HumanoidRootPart.Position - character.HumanoidRootPart.Position).Magnitude
+                                    if distance <= 250 then
+                                        -- Target hit part (standard for RegisterHit)
+                                        local hitPart = target:FindFirstChild("Head") 
+                                            or target:FindFirstChild("HumanoidRootPart") 
+                                            or target:FindFirstChild("RightLowerLeg")
+                                        
+                                        if hitPart then
+                                            local args = {
+                                                hitPart,          -- Hit part
+                                                {},               -- Parts table (standard)
+                                                {},               -- Extra data
+                                                "068b64cb"        -- Session ID (kept from your original)
+                                            }
+                                            RegisterHit:FireServer(unpack(args))
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+                
+                task.wait(0.01) -- Super fast attack speed (M1 spam)
+            end
+        end)
     end
-  end
-end)
+})
 
 Window:Notify({
   Title = "New UI",
